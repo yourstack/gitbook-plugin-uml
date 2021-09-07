@@ -43,6 +43,7 @@ Important:
 
 ## Features
 
+* Support Fullscreen \<img\> Viewer for large puml when click.
 * Support HTML, PDF, EPUB output(make sure your gitbook support SVG)
 * Support `` ``` ``flow code block quote
 * Multi code style support

@@ -2,7 +2,7 @@ var path = require('path');
 var spawn = require('child_process').spawn;
 var fs = require('fs-extra');
 var crypto = require('crypto');
-var plantuml = require('node-plantuml-back');
+var plantuml = require('node-plantuml');
 var Q = require('q');
 
 var nailgunRunning = false;
@@ -48,11 +48,13 @@ function processBlock(blk) {
         }
     }
 
-    if (fs.existsSync(filePath)) {
+    if (false && fs.existsSync(filePath)) {
         var result = "<img src=/" + filePath + ">";
+        result = pluginImgFullscreen(result);
         deferred.resolve(result);
     } else {
-        var gen = plantuml.generate(code, config);
+        // var gen = plantuml.generate(code, config);
+        var gen = plantuml.generate(code);
 
         var chunks = [];
         gen.out.on('data', function(chunk) {
@@ -87,10 +89,105 @@ function processBlock(blk) {
             } else {
                 console.error("File not exist:" + filePath);
             }
+            result = pluginImgFullscreen(result);
             deferred.resolve(result);
         });
     }
     return deferred.promise;
+}
+
+function pluginImgFullscreen(result){
+    // return result;
+    result = result.replace(/\<img/g,'<img  onclick="expandPhoto(this);"');
+    result += `
+    <style>
+
+    .show-img-bg{
+        display: flex;
+        align-items: center;
+        position:fixed;
+        top:0;
+        left:0;
+        background:rgba(0,0,0,0.7);
+        z-index:2;
+        width:100%;
+        height:100%;
+    }
+    .bg-title{
+        position: absolute;
+        right: 20px;
+        color: #FFF;
+        z-index: 99;
+    }
+    .lar-img{
+        display: block;
+        margin: 0 auto;
+        z-index: 3;
+        width:auto;
+        height: auto;
+        cursor: pointer;
+        border:2px solid #fff;
+    }
+    .close-icon{
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: #000000;
+        background-color: #fff;
+        font-size: 20px;
+        font-weight: bold;
+        padding: 8px 16px;
+        border: #fff 1px solid;
+    }
+    .download-btn{
+        position: absolute;
+        right: 50px;
+        bottom: 100px;
+        padding: 8px 24px;
+        color: #000000;
+    }
+    .ori-btn{
+        position: absolute;
+        right: 50px;
+        bottom: 160px;
+        padding: 8px 24px;
+        color: #000000;
+    }
+
+  </style>
+
+  <script>
+  function expandPhoto(obj){
+      var _this = obj;
+      var bg = document.createElement("div"); 
+      bg.setAttribute("id","showImgBg");  
+      bg.setAttribute("class","show-img-bg");  
+      document.body.appendChild(bg);  
+      const bgId = document.getElementById("showImgBg");
+  
+      var larimg = document.createElement("img");
+      larimg.setAttribute("id","larImg");
+      larimg.setAttribute("class","lar-img");
+      larimg.src = _this.getAttribute("src");
+      bgId.appendChild(larimg);
+  
+      var close = document.createElement("span");
+      close.setAttribute("id","closeIcon");
+      close.setAttribute("class","close-icon");
+      close.innerHTML = "x";
+      bgId.appendChild(close);
+  
+      bg.onclick = restore;
+      close.onclick = restore;
+  }
+  
+  function restore(){
+      document.body.removeChild(document.getElementById("showImgBg"));
+  }
+
+  </script>
+    `
+    return result
 }
 
 module.exports = {
